@@ -1,68 +1,39 @@
 package com.pgrela.games.engine;
 
-import com.google.common.collect.Lists;
-
 import java.util.*;
-import java.util.stream.Collectors;
 
-public class GameTreeNode {
-    private Collection<GameTreeNode> children;
-    private GameState state;
-    private PriorityQueue<GameTreeNode> leafs;
-    private Map<GameState, GameTreeNode> nodes;
+public class GameTreeNode<MOVE extends Move, GAME_STATE extends GameState> {
+    private Map<Move, GameTreeNode<MOVE, GAME_STATE>> children;
     private Collection<GameTreeNode> parents = new ArrayList<>();
-    private GameTreeNodeEvaluation evaluation;
-    private Player currentlyMoving;
-    private GameTreeNode bestContinuation;
-    private boolean expanded = false;
+    private GAME_STATE state;
+    private GameTreeNodeEvaluation nodeEvaluation;
+    private Evaluation evaluation;
 
-    public GameTreeNode(GameState state, PriorityQueue<GameTreeNode> leafs, Map<GameState, GameTreeNode> nodes) {
-        this.leafs = leafs;
-        this.nodes = nodes;
-        this.children = Lists.newArrayList();
+    private Player currentlyMoving;
+    private Move bestContinuation;
+    private boolean expanded = false;
+    private Engine<MOVE, GAME_STATE> engine;
+
+    public GameTreeNode(GAME_STATE state, Engine<MOVE, GAME_STATE> engine) {
+        this.engine = engine;
+        this.children = new HashMap<>();
         this.state = state;
-        evaluation = new GameTreeNodeEvaluation(state.getEvaluation());
+        evaluation = engine.evaluate(state);
+        nodeEvaluation = new GameTreeNodeEvaluation(evaluation);
         currentlyMoving = state.getNextPlayer();
     }
 
-    public GameTreeNode(GameState state, PriorityQueue<GameTreeNode> leafs, Map<GameState, GameTreeNode> nodes, GameTreeNode parent) {
-        this(state, leafs, nodes);
+    public GameTreeNode(GAME_STATE state, GameTreeNode parent, Engine<MOVE, GAME_STATE> engine) {
+        this(state, engine);
         this.parents.add(parent);
     }
 
-    public Collection<GameTreeNode> getChildren() {
-        return children;
-    }
-
-    public GameState getState() {
+    public GAME_STATE getState() {
         return state;
     }
 
-    public void expand() {
-        for (GameState nextState : state.next()) {
-            if (nodes.containsKey(nextState)) {
-                GameTreeNode node = nodes.get(nextState);
-                node.addParent(this);
-                children.add(node);
-            } else {
-                GameTreeNode newNode = new GameTreeNode(nextState, leafs, nodes, this);
-                nodes.put(nextState, newNode);
-                children.add(newNode);
-            }
-        }
-        if (children.isEmpty()) {
-            return;
-        }
-        updateEvaluation();
-        leafs.addAll(children.stream()
-                .filter(node -> !node.state.getEvaluation().isDecisive())
-                .filter(node -> !leafs.contains(node))
-                .filter(node -> !node.wasExpanded())
-                .collect(Collectors.toList()));
-        expanded = true;
-    }
 
-    private void addParent(GameTreeNode gameTreeNode) {
+    void addParent(GameTreeNode gameTreeNode) {
         parents.add(gameTreeNode);
     }
 
@@ -70,21 +41,25 @@ public class GameTreeNode {
         return expanded;
     }
 
-    private void updateEvaluation() {
-        bestContinuation = children.stream().max(Comparator.comparingDouble(a -> a.getEvaluation().getForPlayer(currentlyMoving))).get();
-        evaluation.update(bestContinuation.getEvaluation());
-        parents.forEach(parent->parent.update(this));
+    public void markAsExpanded() {
+        this.expanded = true;
+    }
+
+    void updateEvaluation() {
+        bestContinuation = children.entrySet().stream().max(Comparator.comparingDouble(a -> a.getValue().getNodeEvaluation().getForPlayer(currentlyMoving))).get().getKey();
+        nodeEvaluation.update(children.get(bestContinuation).getNodeEvaluation());
+        parents.forEach(parent -> parent.update(this));
     }
 
     private void update(GameTreeNode updatedChild) {
         updateEvaluation();
     }
 
-    public GameTreeNodeEvaluation getEvaluation() {
-        return evaluation;
+    public GameTreeNodeEvaluation getNodeEvaluation() {
+        return nodeEvaluation;
     }
 
-    public GameTreeNode getBestContinuation() {
+    public Move getBestContinuation() {
         return bestContinuation;
     }
 
@@ -101,5 +76,21 @@ public class GameTreeNode {
     @Override
     public int hashCode() {
         return state.hashCode();
+    }
+
+    public void addChild(MOVE move, GameTreeNode<MOVE, GAME_STATE> node) {
+        children.put(move, node);
+    }
+
+    public Map<Move, GameTreeNode<MOVE, GAME_STATE>> getChildren() {
+        return children;
+    }
+
+    public GameTreeNode<MOVE, GAME_STATE> follow(Move continuation) {
+        return children.get(continuation);
+    }
+
+    public Evaluation getStateEvaluation() {
+        return evaluation;
     }
 }

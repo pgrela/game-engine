@@ -1,9 +1,9 @@
 package com.pgrela.games.engine.tictac;
 
-import com.pgrela.games.engine.GameStateEvaluation;
+import com.pgrela.games.engine.Evaluation;
 import com.pgrela.games.engine.Player;
 
-public class TicTacEvaluation implements GameStateEvaluation {
+public class TicTacEvaluation implements Evaluation {
     private double circle;
     private double cross;
     private int blanks;
@@ -37,6 +37,11 @@ public class TicTacEvaluation implements GameStateEvaluation {
     @Override
     public Player getWinner() {
         return circle >= 100 ? TicTacPlayer.CIRCLER : TicTacPlayer.CROSSER;
+    }
+
+    @Override
+    public boolean isWinner(Player player) {
+        return player.equals(getWinner());
     }
 
     @Override

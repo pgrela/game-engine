@@ -1,10 +1,10 @@
 package com.pgrela.games.engine;
 
-public class GameTreeNodeEvaluation {
+public class GameTreeNodeEvaluation implements Evaluation {
 
-    private GameStateEvaluation evaluation;
+    private Evaluation evaluation;
 
-    public GameTreeNodeEvaluation(GameStateEvaluation evaluation) {
+    public GameTreeNodeEvaluation(Evaluation evaluation) {
 
         this.evaluation = evaluation;
     }
@@ -13,8 +13,24 @@ public class GameTreeNodeEvaluation {
         this.evaluation = newEvaluation.evaluation;
     }
 
-    double getForPlayer(Player player){
+    @Override
+    public double getForPlayer(Player player) {
         return evaluation.getForPlayer(player);
+    }
+
+    @Override
+    public boolean isDecisive() {
+        return evaluation.isDecisive();
+    }
+
+    @Override
+    public Player getWinner() {
+        return evaluation.getWinner();
+    }
+
+    @Override
+    public boolean isWinner(Player player) {
+        return evaluation.isWinner(player);
     }
 
     @Override
