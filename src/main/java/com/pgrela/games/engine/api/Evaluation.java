@@ -1,4 +1,4 @@
-package com.pgrela.games.engine;
+package com.pgrela.games.engine.api;
 
 public interface Evaluation {
     double getForPlayer(Player player);

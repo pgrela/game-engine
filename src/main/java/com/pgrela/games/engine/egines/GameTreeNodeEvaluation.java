@@ -1,16 +1,21 @@
-package com.pgrela.games.engine;
+package com.pgrela.games.engine.egines;
+
+import com.pgrela.games.engine.api.Evaluation;
+import com.pgrela.games.engine.api.Player;
 
 public class GameTreeNodeEvaluation implements Evaluation {
 
     private Evaluation evaluation;
 
-    public GameTreeNodeEvaluation(Evaluation evaluation) {
-
-        this.evaluation = evaluation;
+    public GameTreeNodeEvaluation() {
     }
 
     public void update(GameTreeNodeEvaluation newEvaluation) {
         this.evaluation = newEvaluation.evaluation;
+    }
+
+    public void update(Evaluation newEvaluation) {
+        this.evaluation = newEvaluation;
     }
 
     @Override

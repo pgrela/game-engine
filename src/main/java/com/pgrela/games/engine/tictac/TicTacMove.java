@@ -1,6 +1,6 @@
 package com.pgrela.games.engine.tictac;
 
-import com.pgrela.games.engine.Move;
+import com.pgrela.games.engine.api.Move;
 
 public class TicTacMove implements Move {
     Symbol symbol;

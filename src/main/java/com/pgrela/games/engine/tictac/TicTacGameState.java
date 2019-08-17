@@ -1,16 +1,26 @@
 package com.pgrela.games.engine.tictac;
 
-import com.pgrela.games.engine.GameState;
+import com.pgrela.games.engine.api.Board;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
-public class TicTacGameState implements GameState {
+public class TicTacGameState implements Board {
 
     Symbol board[][];
 
     private TicTacPlayer lastPlayer;
 
-    public static int c=0;
+    public static int c = 0;
+
+    static final Map<Symbol, String> S = new HashMap<>();
+
+    static {
+        S.put(Symbol.BLANK, " ");
+        S.put(Symbol.CROSS, "X");
+        S.put(Symbol.CIRCLE, "O");
+    }
 
     public TicTacGameState(Symbol[][] board, TicTacPlayer lastPlayer) {
         this.board = board;
@@ -43,9 +53,14 @@ public class TicTacGameState implements GameState {
 
     @Override
     public String toString() {
-        return "TicTacGameState{" +
-                "board=" + Arrays.toString(board[0]) + Arrays.toString(board[1]) + Arrays.toString(board[2]) +
-                ", lastPlayer=" + lastPlayer +
-                '}';
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                stringBuilder.append(S.get(board[i][j]));
+            }
+            stringBuilder.append("\n");
+        }
+        stringBuilder.append("\n");
+        return stringBuilder.toString();
     }
 }

@@ -1,15 +1,17 @@
 package com.pgrela.games.engine.tictac;
 
-import com.pgrela.games.engine.GameStateGenerator;
+import com.pgrela.games.engine.api.Board;
+import com.pgrela.games.engine.api.GeneratorImpl;
+import com.pgrela.games.engine.api.Move;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class TicTacGameStateGenerator implements GameStateGenerator<TicTacMove, TicTacGameState> {
+public class TicTacGameStateGenerator implements GeneratorImpl<TicTacGameState> {
     @Override
-    public Map<TicTacMove, TicTacGameState> next(TicTacGameState gameState) {
+    public Map<Move, Board> generate(TicTacGameState gameState) {
 
-        Map<TicTacMove, TicTacGameState> ticTacGameStates = new HashMap<>();
+        Map<Move, Board> ticTacGameStates = new HashMap<>();
         for (int i = 0; i < gameState.board.length; i++) {
             for (int j = 0; j < gameState.board[i].length; j++) {
                 if (gameState.board[i][j] == Symbol.BLANK) {

@@ -1,6 +1,6 @@
 package com.pgrela.games.engine.tictac;
 
-import com.pgrela.games.engine.InitialStateFactory;
+import com.pgrela.games.engine.api.InitialStateFactory;
 
 import static com.pgrela.games.engine.tictac.Symbol.*;
 

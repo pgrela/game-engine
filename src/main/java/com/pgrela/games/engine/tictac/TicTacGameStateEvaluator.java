@@ -1,10 +1,10 @@
 package com.pgrela.games.engine.tictac;
 
-import com.pgrela.games.engine.GameStateEvaluator;
+import com.pgrela.games.engine.api.EvaluatorImpl;
 
-public class TicTacGameStateEvaluator implements GameStateEvaluator<TicTacGameState> {
+public class TicTacGameStateEvaluator implements EvaluatorImpl<TicTacGameState> {
     @Override
-    public TicTacEvaluation evaluate(TicTacGameState gameState) {
+    public TicTacEvaluation evaluateBoard(TicTacGameState gameState) {
         double circle = getEvaluation(Symbol.CIRCLE, gameState.board);
         double cross = getEvaluation(Symbol.CROSS, gameState.board);
 

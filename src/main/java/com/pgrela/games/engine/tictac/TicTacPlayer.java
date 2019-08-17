@@ -1,6 +1,6 @@
 package com.pgrela.games.engine.tictac;
 
-import com.pgrela.games.engine.Player;
+import com.pgrela.games.engine.api.Player;
 
 public enum TicTacPlayer implements Player {
     CIRCLER(Symbol.CIRCLE), CROSSER(Symbol.CROSS);

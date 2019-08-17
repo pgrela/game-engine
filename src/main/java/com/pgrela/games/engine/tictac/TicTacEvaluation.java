@@ -1,7 +1,7 @@
 package com.pgrela.games.engine.tictac;
 
-import com.pgrela.games.engine.Evaluation;
-import com.pgrela.games.engine.Player;
+import com.pgrela.games.engine.api.Evaluation;
+import com.pgrela.games.engine.api.Player;
 
 public class TicTacEvaluation implements Evaluation {
     private double circle;
@@ -36,7 +36,7 @@ public class TicTacEvaluation implements Evaluation {
 
     @Override
     public Player getWinner() {
-        return circle >= 100 ? TicTacPlayer.CIRCLER : TicTacPlayer.CROSSER;
+        return circle >= 100 ? TicTacPlayer.CIRCLER : cross >= 100 ? TicTacPlayer.CROSSER : null;
     }
 
     @Override
