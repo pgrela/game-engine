@@ -23,7 +23,7 @@ public class ExploringEngine extends BoardEngine {
     @Override
     public void initialize(Board board) {
         super.initialize(board);
-        leafs = new ArrayDeque<>();
+        leafs = new ArrayDeque<>(1_000_000);
         current = new DummyGameTreeNode(this.board);
         current.updateEvaluation(evaluator.evaluate(board));
         leafs.add(current);

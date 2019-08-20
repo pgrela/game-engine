@@ -16,24 +16,25 @@ public class GameRunner {
         EngineFactory engineFactory = new EngineFactory().initialized();
 
         Engine ticTac = engineFactory.forRules(new TicTac()).depthRestrainedEngine(2);
-        Engine connect4 = engineFactory.forRules(new Connect4()).nodeCountRestrainedEngine(100000);
+        Engine connect4 = engineFactory.forRules(new Connect4()).depthRestrainedEngine(5);
         Engine dummy = engineFactory.forRules(new Dummy()).nodeCountRestrainedEngine(1000_000);
 
-        play(dummy);
+        play(connect4);
     }
 
     private static void play(Engine engine) throws IOException {
         Scanner scanner = new Scanner(System.in);
+        System.in.read();
         while (!engine.getEvaluation().isDecisive()) {
             System.out.println(engine.getCurrentBoard());
 //            String read = scanner.nextLine();
 //            engine.move(Connect4Move.getMove(Integer.valueOf(read)));
             long nanoTime = System.nanoTime();
             engine.start();
+            System.out.println((System.nanoTime() - nanoTime) / 10000 / 100. + "ms");
 //            if(engine.getEvaluation().isDecisive()){
 //                break;
 //            }
-            System.out.println((System.nanoTime() - nanoTime) / 10000 / 100. + "ms");
             Move bestMove = engine.getBestMove();
             System.out.println(bestMove + " "+ engine.getEvaluation());
             engine.move(bestMove);
