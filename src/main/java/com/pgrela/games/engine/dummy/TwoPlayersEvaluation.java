@@ -21,6 +21,7 @@ public class TwoPlayersEvaluation implements Evaluation {
     public TwoPlayersEvaluation(Player winner) {
         this.player = winner;
         evaluation = MAX;
+        decisive = true;
     }
 
     public TwoPlayersEvaluation(Player player, double evaluation) {

@@ -8,6 +8,8 @@ import com.pgrela.games.engine.dummy.TwoPlayersEvaluation;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.pgrela.games.engine.connect4.Connect4CompactBoard.*;
+
 public class Connect4CompactBoardEvaluator implements EvaluatorImpl<Connect4CompactBoard> {
     static private List<List<Long>> LINES = new ArrayList<>();
     static long CROSS = 1;
@@ -45,42 +47,42 @@ public class Connect4CompactBoardEvaluator implements EvaluatorImpl<Connect4Comp
 
 
     static {
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < LONGS; i++) {
             LINES.add(new ArrayList<>());
         }
         // row lines
-        for (int aLong = 0; aLong < 4; aLong++) {
-            for (int row = 0; row < 7; row++) {
-                long[] line = new long[4];
-                for (int column = 0; column < 4; column++) {
-                    line[column] = row * 4 + column;
+        for (int aLong = 0; aLong < LONGS; aLong++) {
+            for (int row = 0; row < ROWS; row++) {
+                long[] line = new long[LONGS];
+                for (int column = 0; column <= COLUMNS - CONNECT; column++) {
+                    line[column] = row * ROW_LENGTH + column;
                 }
                 LINES.get(aLong).add(line4(line));
             }
         }
-        // column lines                                
-        for (int startColumn = 0; startColumn < 4; startColumn++) {
-            for (int startRow = 0; startRow < 4; startRow++) {
-                long[] line = new long[4];
-                for (int point = 0; point < 4; point++) {
-                    line[point] = startRow * (4 + point) + startColumn;
+        // column lines
+        for (int startColumn = 0; startColumn < COLUMNS - 3; startColumn++) {
+            for (int startRow = 0; startRow <= ROWS - CONNECT; startRow++) {
+                long[] line = new long[LONGS];
+                for (int point = 0; point < CONNECT; point++) {
+                    line[point] = startRow * (ROW_LENGTH + point) + startColumn;
                 }
                 LINES.get(0).add(line4(line));
             }
         }
-        for (int startColumn = 1; startColumn < 4; startColumn++) {
-            for (int startRow = 0; startRow < 4; startRow++) {
-                long[] line = new long[4];
-                for (int point = 0; point < 4; point++) {
-                    line[point] = startRow * (4 + point) + startColumn;
+        for (int startColumn = 1; startColumn < COLUMNS - 3; startColumn++) {
+            for (int startRow = 0; startRow < ROWS - 3; startRow++) {
+                long[] line = new long[LONGS];
+                for (int point = 0; point < CONNECT; point++) {
+                    line[point] = startRow * (ROW_LENGTH + point) + startColumn;
                 }
                 LINES.get(3).add(line4(line));
             }
         }
         // diagonals down-right lines
-        for (int aLong = 0; aLong < 4; aLong++) {
-            for (int startRow = 0; startRow < 4; startRow++) {
-                long[] line = new long[4];
+        for (int aLong = 0; aLong < LONGS; aLong++) {
+            for (int startRow = 0; startRow < ROWS - 3; startRow++) {
+                long[] line = new long[LONGS];
                 for (int column = 0; column < 4; column++) {
                     line[column] = startRow * 4 + 5 * column;
                 }
@@ -88,9 +90,9 @@ public class Connect4CompactBoardEvaluator implements EvaluatorImpl<Connect4Comp
             }
         }
         // diagonals down-left lines
-        for (int aLong = 0; aLong < 4; aLong++) {
-            for (int startRow = 0; startRow < 4; startRow++) {
-                long[] line = new long[4];
+        for (int aLong = 0; aLong < LONGS; aLong++) {
+            for (int startRow = 0; startRow < ROWS - 3; startRow++) {
+                long[] line = new long[LONGS];
                 for (int column = 0; column < 4; column++) {
                     line[column] = ((startRow + column) * 4 + 3) - column;
                 }
@@ -101,7 +103,7 @@ public class Connect4CompactBoardEvaluator implements EvaluatorImpl<Connect4Comp
 
     @Override
     public Evaluation evaluateBoard(Connect4CompactBoard board) {
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < LONGS; i++) {
             for (long line : LINES.get(i)) {
                 long aLine = board.board[i] & line;
                 if (aLine == (line & CROSSES)) {
@@ -112,7 +114,7 @@ public class Connect4CompactBoardEvaluator implements EvaluatorImpl<Connect4Comp
                 }
             }
         }
-        if (board.blanks == 0) {
+        if (board.getBlanks() == 0) {
             return TwoPlayersBinaryEvaluation.DRAWN;
         }
         return TwoPlayersBinaryEvaluation.DRAWING;
