@@ -26,12 +26,12 @@ public class Connect4CompactBoardGenerator implements GeneratorImpl<Connect4Comp
     }
 
     Connect4CompactBoard apply(Connect4CompactBoard board, Connect4Move move) {
-        long[] newBoard = Arrays.copyOf(board.board, 4);
+        MagicBoard magicBoard = new MagicBoard(board.board);
         int alteredColumn = move.getColumn();
         for (int row = ROWS - 1; row >= 0; row--) {
             if (board.isBlank(row, alteredColumn)) {
-                setCode(newBoard, row, alteredColumn, board.getNextPlayer().getSymbol().getCode());
-                return new Connect4CompactBoard(newBoard, board.getNextPlayer().next(),
+                magicBoard.setCode(row, alteredColumn, board.getNextPlayer().getSymbol().getCode());
+                return new Connect4CompactBoard(magicBoard, board.getNextPlayer().next(),
                         board.getBlanks() - 1);
             }
         }

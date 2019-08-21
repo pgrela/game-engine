@@ -22,6 +22,7 @@ public class Node {
     private boolean expanded = false;
 
     private int depth;
+    private boolean removed = false;
 
     public Node(Board board, Evaluation boardEvaluation) {
         this.board = board;
@@ -45,6 +46,7 @@ public class Node {
     }
 
     void addParent(Node newParent) {
+        removed = false;
         parents.add(newParent);
     }
 
@@ -63,7 +65,11 @@ public class Node {
             updateParents();
         } else {
             setBestContinuation(children.inverse().get(bestMoves.peek()));
-            Evaluation newEvaluation = children.get(getBestContinuation()).getNodeEvaluation();
+            Node node = children.get(getBestContinuation());
+            if(node==null){
+                throw new IllegalStateException();
+            }
+            Evaluation newEvaluation = node.getNodeEvaluation();
             if (!this.nodeEvaluation.equals(newEvaluation)) {
                 this.nodeEvaluation = newEvaluation;
                 updateParents();
@@ -105,7 +111,14 @@ public class Node {
     }
 
     public void addChild(Move move, Node node) {
+        removed=false;
+        if(children.containsValue(node)){
+            return;
+        }
         children.put(move, node);
+        if(bestMoves.contains(node)){
+            throw new IllegalStateException();
+        }
         bestMoves.add(node);
         if (children.size() == 1) {
             nodeEvaluation = node.getNodeEvaluation();
@@ -121,7 +134,7 @@ public class Node {
     }
 
     public Map<Move, Node> getChildren() {
-        return children;
+        return Collections.unmodifiableMap(children);
     }
 
     public Node follow(Move continuation) {
@@ -144,31 +157,35 @@ public class Node {
         if (this.equals(currentState)) {
             return true;
         }
-        return parents.stream().anyMatch(p -> p.hasAncestor(currentState));
+        return getParents().stream().anyMatch(p -> p.hasAncestor(currentState));
     }
 
     void disconnect() {
-        getChildren().entrySet().forEach(c -> c.getValue().getParents().remove(this));
+        children.forEach((ignore, child) -> child.getParents().remove(this));
+        children.clear();
+        bestMoves.clear();
         parents.forEach(this::removeChild);
+        parents.clear();
+        removed = true;
     }
 
-    private void removeChild(Node c) {
-        c.bestMoves.remove(this);
-        c.children.inverse().remove(this);
-        c.recalculateEvaluation();
+    public boolean isRemoved() {
+        return removed;
     }
 
-    public void getLostUnless(Map<Node, Boolean> hasCurrentAsAncestor, Node passedState) {
+    private void removeChild(Node parent) {
+        parent.bestMoves.remove(this);
+        parent.children.inverse().remove(this);
+        parent.recalculateEvaluation();
+    }
+
+    public void getLostUnless(Map<Node, Boolean> hasCurrentAsAncestor) {
+        if(removed)return;
         if (!hasAncestor(hasCurrentAsAncestor)) {
             ArrayList<Node> children = new ArrayList<>(getChildren().values());
-            this.children.clear();
-            children.forEach(child -> child.removeParent(this));
-            getParents().forEach(parent->parent.getLostUnless(hasCurrentAsAncestor, passedState));
+            disconnect();
+            children.forEach(child -> child.getLostUnless(hasCurrentAsAncestor));
         }
-    }
-
-    private void removeParent(Node node) {
-        parents.remove(node);
     }
 
     private boolean hasAncestor(Map<Node, Boolean> visited) {

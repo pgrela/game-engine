@@ -18,7 +18,7 @@ class Connect4CompactBoardGeneratorTest {
     Connect4CompactBoard board = factory.initialState();
     Connect4CompactBoard newBoard = generator.apply(board, Connect4Move.getMove(0));
     System.out.println(newBoard);
-    assertThat(newBoard.getCode(6,0)).isEqualTo(board.getNextPlayer().getSymbol().getCode());
+    assertThat(newBoard.board.getCode(5,0)).isEqualTo(board.getNextPlayer().getSymbol().getCode());
   }
 
 }

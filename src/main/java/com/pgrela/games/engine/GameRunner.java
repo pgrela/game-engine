@@ -18,7 +18,7 @@ public class GameRunner {
 
         Engine ticTac = engineFactory.forRules(new TicTac()).depthRestrainedEngine(2);
         Engine connect4 = engineFactory.forRules(new Connect4()).depthRestrainedEngine(5);
-        Engine connect4Compact = engineFactory.forRules(new Connect4Compact()).depthRestrainedEngine(6);
+        Engine connect4Compact = engineFactory.forRules(new Connect4Compact()).depthRestrainedEngine(9);
         Engine dummy = engineFactory.forRules(new Dummy()).nodeCountRestrainedEngine(1000_000);
 
         play(connect4Compact);
@@ -26,7 +26,7 @@ public class GameRunner {
 
     private static void play(Engine engine) throws IOException {
         Scanner scanner = new Scanner(System.in);
-        System.in.read();
+        //System.in.read();
         while (!engine.getEvaluation().isDecisive()) {
             System.out.println(engine.getCurrentBoard());
 //            String read = scanner.nextLine();

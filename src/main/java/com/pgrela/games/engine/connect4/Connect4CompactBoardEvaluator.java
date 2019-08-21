@@ -6,12 +6,14 @@ import com.pgrela.games.engine.dummy.TwoPlayersBinaryEvaluation;
 import com.pgrela.games.engine.dummy.TwoPlayersEvaluation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.pgrela.games.engine.connect4.Connect4CompactBoard.*;
 
 public class Connect4CompactBoardEvaluator implements EvaluatorImpl<Connect4CompactBoard> {
-    static private List<List<Long>> LINES = new ArrayList<>();
+    static private List<Long> LEFT_LINES = new ArrayList<>();
+    static private List<Long> RIGHT_LINES = new ArrayList<>();
     static long CROSS = 1;
     static long CIRCLE = 2;
     static long BLANK = 0;
@@ -19,6 +21,23 @@ public class Connect4CompactBoardEvaluator implements EvaluatorImpl<Connect4Comp
     static long BITS = 2;
     private static long CROSSES = 0;
     private static long CIRCLES = 0;
+
+    static class Coords {
+        int row, column;
+
+        public Coords(int row, int column) {
+            this.row = row;
+            this.column = column;
+        }
+
+        public int getRow() {
+            return row;
+        }
+
+        public int getColumn() {
+            return column;
+        }
+    }
 
     /**
      * 1  0,1,2,3,
@@ -36,82 +55,71 @@ public class Connect4CompactBoardEvaluator implements EvaluatorImpl<Connect4Comp
         }
     }
 
-    private static long line4(long... cords) {
-        long r = 0;
+    private static void line4(Coords... cords) {
         if (cords.length != 4) throw new IllegalArgumentException();
+        MagicBoard magicBoard = new MagicBoard();
         for (int i = 0; i < 4; i++) {
-            r |= MASK << (BITS * cords[i]);
+            magicBoard.setCode(cords[i].getRow(), cords[i].getColumn(), MASK);
         }
-        return r;
+        if (Arrays.stream(cords).mapToInt(Coords::getColumn).max().getAsInt()<5) {
+            LEFT_LINES.add(magicBoard.left);
+        } else {
+            RIGHT_LINES.add(magicBoard.right);
+        }
     }
 
 
     static {
-        for (int i = 0; i < LONGS; i++) {
-            LINES.add(new ArrayList<>());
-        }
-        // row lines
-        for (int aLong = 0; aLong < LONGS; aLong++) {
-            for (int row = 0; row < ROWS; row++) {
-                long[] line = new long[LONGS];
-                for (int column = 0; column <= COLUMNS - CONNECT; column++) {
-                    line[column] = row * ROW_LENGTH + column;
+        for (int startRow = 0; startRow < ROWS; startRow++) {
+            for (int startColumn = 0; startColumn < COLUMNS; startColumn++) {
+                if (startColumn < CONNECT) {
+                    Coords[] coords = new Coords[4];
+                    for (int i = 0; i < CONNECT; i++) {
+                        coords[i] = new Coords(startRow, startColumn + i);
+                    }
+                    line4(coords);
                 }
-                LINES.get(aLong).add(line4(line));
-            }
-        }
-        // column lines
-        for (int startColumn = 0; startColumn < COLUMNS - 3; startColumn++) {
-            for (int startRow = 0; startRow <= ROWS - CONNECT; startRow++) {
-                long[] line = new long[LONGS];
-                for (int point = 0; point < CONNECT; point++) {
-                    line[point] = startRow * (ROW_LENGTH + point) + startColumn;
+                if (startRow < CONNECT) {
+                    Coords[] coords = new Coords[4];
+                    for (int i = 0; i < CONNECT; i++) {
+                        coords[i] = new Coords(startRow + i, startColumn);
+                    }
+                    line4(coords);
                 }
-                LINES.get(0).add(line4(line));
-            }
-        }
-        for (int startColumn = 1; startColumn < COLUMNS - 3; startColumn++) {
-            for (int startRow = 0; startRow < ROWS - 3; startRow++) {
-                long[] line = new long[LONGS];
-                for (int point = 0; point < CONNECT; point++) {
-                    line[point] = startRow * (ROW_LENGTH + point) + startColumn;
+                if (startRow < CONNECT && startColumn < CONNECT) {
+                    Coords[] coords = new Coords[4];
+                    for (int i = 0; i < CONNECT; i++) {
+                        coords[i] = new Coords(startRow + i, startColumn + i);
+                    }
+                    line4(coords);
                 }
-                LINES.get(3).add(line4(line));
-            }
-        }
-        // diagonals down-right lines
-        for (int aLong = 0; aLong < LONGS; aLong++) {
-            for (int startRow = 0; startRow < ROWS - 3; startRow++) {
-                long[] line = new long[LONGS];
-                for (int column = 0; column < 4; column++) {
-                    line[column] = startRow * 4 + 5 * column;
+                if (startRow < CONNECT && startColumn < CONNECT) {
+                    Coords[] coords = new Coords[4];
+                    for (int i = 0; i < CONNECT; i++) {
+                        coords[i] = new Coords(startRow + i, startColumn + 3 - i);
+                    }
+                    line4(coords);
                 }
-                LINES.get(aLong).add(line4(line));
-            }
-        }
-        // diagonals down-left lines
-        for (int aLong = 0; aLong < LONGS; aLong++) {
-            for (int startRow = 0; startRow < ROWS - 3; startRow++) {
-                long[] line = new long[LONGS];
-                for (int column = 0; column < 4; column++) {
-                    line[column] = ((startRow + column) * 4 + 3) - column;
-                }
-                LINES.get(aLong).add(line4(line));
             }
         }
     }
 
     @Override
     public Evaluation evaluateBoard(Connect4CompactBoard board) {
-        for (int i = 0; i < LONGS; i++) {
-            for (long line : LINES.get(i)) {
-                long aLine = board.board[i] & line;
-                if (aLine == (line & CROSSES)) {
-                    return new TwoPlayersEvaluation(Connect4Player.RED);
-                }
-                if (aLine == (line & CIRCLES)) {
-                    return new TwoPlayersEvaluation(Connect4Player.BLUE);
-                }
+        for (long line : LEFT_LINES) {
+            if((board.board.left & line) == (line&CROSSES)){
+                return new TwoPlayersEvaluation(Connect4Player.RED);
+            }
+            if((board.board.left & line) == (line&CIRCLES)){
+                return new TwoPlayersEvaluation(Connect4Player.BLUE);
+            }
+        }
+        for (long line : RIGHT_LINES) {
+            if((board.board.right & line) == (line&CROSSES)){
+                return new TwoPlayersEvaluation(Connect4Player.RED);
+            }
+            if((board.board.right & line) == (line&CIRCLES)){
+                return new TwoPlayersEvaluation(Connect4Player.BLUE);
             }
         }
         if (board.getBlanks() == 0) {

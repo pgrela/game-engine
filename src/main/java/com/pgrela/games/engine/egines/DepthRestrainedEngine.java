@@ -9,7 +9,7 @@ public class DepthRestrainedEngine extends BoardEngine implements Engine {
     private Node currentState;
     private int depth;
     private PriorityQueue<Node> leafs;
-    protected Map<Board, Node> nodes = new HashMap<>();
+    protected Map<Board, Node> nodes = new WeakHashMap<>();
     private Evaluator evaluator;
     private Generator generator;
     public static int cc = 0;
@@ -66,8 +66,7 @@ public class DepthRestrainedEngine extends BoardEngine implements Engine {
         if (anExpandable.wasExpanded()) {
             return;
         }
-        if (!anExpandable.hasAncestor(currentState)) {
-            nodes.remove(anExpandable.getBoard());
+        if(anExpandable.isRemoved()){
             return;
         }
         expand(anExpandable);
@@ -83,6 +82,9 @@ public class DepthRestrainedEngine extends BoardEngine implements Engine {
             Node newNode;
             if (nodes.containsKey(board)) {
                 newNode = nodes.get(board);
+                if(leaf.getChildren().containsValue(newNode)) {
+                    continue;
+                }
                 newNode.addParent(leaf);
             } else {
                 newNode = new Node(board, evaluate(board), leaf);
@@ -141,19 +143,14 @@ public class DepthRestrainedEngine extends BoardEngine implements Engine {
         }
         Node passedState = this.currentState;
         this.currentState = passedState.follow(move);
+
         Map<Node,Boolean> hasCurrentAsAncestor = new HashMap<>();
         hasCurrentAsAncestor.put(currentState, true);
-        for (Node child : new ArrayList<>(passedState.getChildren().values())) {
-            child.getLostUnless(hasCurrentAsAncestor, passedState);
-        }
-        /*Iterator<Map.Entry<Board, Node>> iterator = this.nodes.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<Board, Node> next = iterator.next();
-            if (!next.getValue().hasAncestor(this.currentState)) {
-                next.getValue().disconnect();
-                iterator.remove();
-            }
-        } */
+        System.out.println(nodes.size());
+        passedState.getLostUnless(hasCurrentAsAncestor);
+        System.out.println(nodes.size());
+        nodes.entrySet().removeIf(e->e.getValue().isRemoved());
+        System.out.println(nodes.size());
     }
 
 }
