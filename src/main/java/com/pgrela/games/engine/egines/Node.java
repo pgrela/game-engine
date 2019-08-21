@@ -157,4 +157,32 @@ public class Node {
         c.children.inverse().remove(this);
         c.recalculateEvaluation();
     }
+
+    public void getLostUnless(Map<Node, Boolean> hasCurrentAsAncestor, Node passedState) {
+        if (!hasAncestor(hasCurrentAsAncestor)) {
+            ArrayList<Node> children = new ArrayList<>(getChildren().values());
+            this.children.clear();
+            children.forEach(child -> child.removeParent(this));
+            getParents().forEach(parent->parent.getLostUnless(hasCurrentAsAncestor, passedState));
+        }
+    }
+
+    private void removeParent(Node node) {
+        parents.remove(node);
+    }
+
+    private boolean hasAncestor(Map<Node, Boolean> visited) {
+        Boolean cachedResult = visited.get(this);
+        if (cachedResult != null) {
+            return cachedResult;
+        }
+        for (Node parent : getParents()) {
+            if (parent.hasAncestor(visited)) {
+                visited.put(this, true);
+                return true;
+            }
+        }
+        visited.put(this, false);
+        return false;
+    }
 }

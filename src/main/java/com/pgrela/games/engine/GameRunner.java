@@ -26,7 +26,7 @@ public class GameRunner {
 
     private static void play(Engine engine) throws IOException {
         Scanner scanner = new Scanner(System.in);
-        //System.in.read();
+        System.in.read();
         while (!engine.getEvaluation().isDecisive()) {
             System.out.println(engine.getCurrentBoard());
 //            String read = scanner.nextLine();

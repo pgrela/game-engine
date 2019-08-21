@@ -141,13 +141,19 @@ public class DepthRestrainedEngine extends BoardEngine implements Engine {
         }
         Node passedState = this.currentState;
         this.currentState = passedState.follow(move);
-        Iterator<Map.Entry<Board, Node>> iterator = nodes.entrySet().iterator();
+        Map<Node,Boolean> hasCurrentAsAncestor = new HashMap<>();
+        hasCurrentAsAncestor.put(currentState, true);
+        for (Node child : new ArrayList<>(passedState.getChildren().values())) {
+            child.getLostUnless(hasCurrentAsAncestor, passedState);
+        }
+        /*Iterator<Map.Entry<Board, Node>> iterator = this.nodes.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<Board, Node> next = iterator.next();
             if (!next.getValue().hasAncestor(this.currentState)) {
                 next.getValue().disconnect();
                 iterator.remove();
             }
-        }
+        } */
     }
+
 }
