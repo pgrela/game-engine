@@ -13,7 +13,7 @@ public class NodeCountRestrainedEngine extends DepthRestrainedEngine {
     }
 
     @Override
-    protected boolean shouldContinue(Node node) {
+    protected boolean shouldNotContinue(Node node) {
         return nodes.size() > size;
     }
 }

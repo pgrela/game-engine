@@ -8,23 +8,23 @@ import com.pgrela.games.engine.api.Player;
 
 import java.util.*;
 
-public class Node {
+class Node {
     private HashBiMap<Move, Node> children;
     private PriorityQueue<Node> bestMoves;
     private Collection<Node> parents;
+    private int depth;
 
     private Board board;
+    private final Player currentlyMoving;
     private Evaluation boardEvaluation;
     private Evaluation nodeEvaluation;
 
-    private final Player currentlyMoving;
     private Move bestContinuation;
-    private boolean expanded = false;
 
-    private int depth;
+    private boolean expanded = false;
     private boolean removed = false;
 
-    public Node(Board board, Evaluation boardEvaluation) {
+    Node(Board board, Evaluation boardEvaluation) {
         this.board = board;
         this.boardEvaluation = boardEvaluation;
         nodeEvaluation = boardEvaluation;
@@ -35,26 +35,27 @@ public class Node {
         bestMoves = new PriorityQueue<>(Comparator.comparingDouble((Node node) -> node.nodeEvaluation.getForPlayer(currentlyMoving)).reversed());
     }
 
-    public Node(Board board, Evaluation boardEvaluation, Node parent) {
-        this(board, boardEvaluation);
-        this.parents.add(parent);
-        depth = parent.getDepth() + 1;
-    }
-
-    public Board getBoard() {
+    Board getBoard() {
         return board;
     }
 
-    void addParent(Node newParent) {
+    private void addParent(Node newParent) {
         removed = false;
         parents.add(newParent);
+        if (parents.size() == 1) {
+            depth = newParent.getDepth() + 1;
+        } else {
+            if (depth > newParent.getDepth() + 1) {
+                depth = newParent.getDepth() + 1;
+            }
+        }
     }
 
-    public boolean wasExpanded() {
+    boolean wasExpanded() {
         return expanded;
     }
 
-    public void markAsExpanded() {
+    void markAsExpanded() {
         this.expanded = true;
     }
 
@@ -62,32 +63,32 @@ public class Node {
         if (getChildren().isEmpty()) {
             setBestContinuation(null);
             nodeEvaluation = boardEvaluation;
-            updateParents();
+            notifyParents();
         } else {
             setBestContinuation(children.inverse().get(bestMoves.peek()));
             Node node = children.get(getBestContinuation());
-            if(node==null){
+            if (node == null) {
                 throw new IllegalStateException();
             }
             Evaluation newEvaluation = node.getNodeEvaluation();
             if (!this.nodeEvaluation.equals(newEvaluation)) {
                 this.nodeEvaluation = newEvaluation;
-                updateParents();
+                notifyParents();
             }
         }
     }
 
-    private void update(Node updatedChild) {
+    private void childUpdated(Node updatedChild) {
         bestMoves.remove(updatedChild);
         bestMoves.add(updatedChild);
         recalculateEvaluation();
     }
 
-    public Evaluation getNodeEvaluation() {
+    Evaluation getNodeEvaluation() {
         return nodeEvaluation;
     }
 
-    public Move getBestContinuation() {
+    Move getBestContinuation() {
         return bestContinuation;
     }
 
@@ -95,81 +96,81 @@ public class Node {
         this.bestContinuation = bestContinuation;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Node that = (Node) o;
-
-        return board.equals(that.board);
-    }
-
-    @Override
-    public int hashCode() {
-        return board.hashCode();
-    }
-
-    public void addChild(Move move, Node node) {
-        removed=false;
-        if(children.containsValue(node)){
+    void embraceAsChild(Move move, Node child) {
+        if (children.containsValue(child)) {
             return;
         }
-        children.put(move, node);
-        if(bestMoves.contains(node)){
+        removed = false;
+        child.addParent(this);
+        children.put(move, child);
+        if (bestMoves.contains(child)) {
             throw new IllegalStateException();
         }
-        bestMoves.add(node);
+        bestMoves.add(child);
         if (children.size() == 1) {
-            nodeEvaluation = node.getNodeEvaluation();
+            nodeEvaluation = child.getNodeEvaluation();
             setBestContinuation(move);
-            updateParents();
+            notifyParents();
         } else {
-            update(node);
+            childUpdated(child);
         }
     }
 
-    private void updateParents() {
-        parents.forEach(parent -> parent.update(this));
+    private void notifyParents() {
+        getParents().forEach(parent -> parent.childUpdated(this));
     }
 
-    public Map<Move, Node> getChildren() {
+    Map<Move, Node> getChildren() {
         return Collections.unmodifiableMap(children);
     }
 
-    public Node follow(Move continuation) {
+    Node follow(Move continuation) {
         return getChildren().get(continuation);
     }
 
-    public Evaluation getStateEvaluation() {
+    Evaluation getBoardEvaluation() {
         return boardEvaluation;
     }
 
-    public Collection<Node> getParents() {
-        return parents;
+    Collection<Node> getParents() {
+        return Collections.unmodifiableCollection(parents);
     }
 
-    public int getDepth() {
+    int getDepth() {
         return depth;
     }
 
-    public boolean hasAncestor(Node currentState) {
-        if (this.equals(currentState)) {
-            return true;
-        }
-        return getParents().stream().anyMatch(p -> p.hasAncestor(currentState));
-    }
-
-    void disconnect() {
-        children.forEach((ignore, child) -> child.getParents().remove(this));
-        children.clear();
-        bestMoves.clear();
-        parents.forEach(this::removeChild);
-        parents.clear();
+    private void disconnect() {
+        disconnectChildren();
+        disconnectParents();
         removed = true;
     }
 
-    public boolean isRemoved() {
+    private void disconnectParents() {
+        parents.forEach(this::removeChild);
+        parents.clear();
+    }
+
+    private void disconnectChildren() {
+        children.forEach((ignore, child) -> child.removeParent(this));
+        children.clear();
+        bestMoves.clear();
+        bestContinuation=null;
+    }
+
+    private void removeParent(Node parent) {
+        if (!parents.contains(parent)) {
+            throw new IllegalStateException();
+        }
+        parents.remove(parent);
+        if (parents.isEmpty()) {
+            depth = 0;
+        } else {
+            depth = parents.stream().mapToInt(Node::getDepth).min().getAsInt() + 1;
+        }
+    }
+
+    boolean isRemoved() {
         return removed;
     }
 
@@ -179,12 +180,12 @@ public class Node {
         parent.recalculateEvaluation();
     }
 
-    public void getLostUnless(Map<Node, Boolean> hasCurrentAsAncestor) {
-        if(removed)return;
-        if (!hasAncestor(hasCurrentAsAncestor)) {
-            ArrayList<Node> children = new ArrayList<>(getChildren().values());
+    void getLostUnless(Map<Node, Boolean> hasRootAsAncestorCache) {
+        if (removed) return;
+        if (!hasAncestor(hasRootAsAncestorCache)) {
+            ArrayList<Node> cachedChildren = new ArrayList<>(getChildren().values());
             disconnect();
-            children.forEach(child -> child.getLostUnless(hasCurrentAsAncestor));
+            cachedChildren.forEach(child -> child.getLostUnless(hasRootAsAncestorCache));
         }
     }
 
@@ -201,5 +202,20 @@ public class Node {
         }
         visited.put(this, false);
         return false;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Node that = (Node) o;
+
+        return board.equals(that.board);
+    }
+
+    @Override
+    public int hashCode() {
+        return board.hashCode();
     }
 }

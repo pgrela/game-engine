@@ -9,17 +9,17 @@ public class DepthRestrainedEngine extends BoardEngine implements Engine {
     private Node currentState;
     private int depth;
     private PriorityQueue<Node> leafs;
-    protected Map<Board, Node> nodes = new WeakHashMap<>();
+    Map<Board, Node> nodes = new WeakHashMap<>();
     private Evaluator evaluator;
     private Generator generator;
-    public static int cc = 0;
+    private static int cc = 0;
 
-    public DepthRestrainedEngine(Evaluator evaluator, Generator generator, int depth) {
+    DepthRestrainedEngine(Evaluator evaluator, Generator generator, int depth) {
         this(evaluator, generator);
         this.depth = depth;
     }
 
-    public DepthRestrainedEngine(Evaluator evaluator, Generator generator) {
+    DepthRestrainedEngine(Evaluator evaluator, Generator generator) {
         this.evaluator = evaluator;
         this.generator = generator;
         leafs = new PriorityQueue<>(Comparator.comparingInt(Node::getDepth));
@@ -35,11 +35,10 @@ public class DepthRestrainedEngine extends BoardEngine implements Engine {
     @Override
     public void start() {
         while (!leafs.isEmpty()) {
-            if (shouldContinue(leafs.peek())) {
+            if (shouldNotContinue(leafs.peek())) {
                 return;
             }
             follow(leafs.poll());
-
         }
         System.out.println("Played");
         System.out.println("Analyzed " + nodes.size() + " nodes.");
@@ -47,7 +46,7 @@ public class DepthRestrainedEngine extends BoardEngine implements Engine {
         System.out.println(cc);
     }
 
-    protected boolean shouldContinue(Node node) {
+    protected boolean shouldNotContinue(Node node) {
         return node.getDepth() - currentState.getDepth() > depth;
     }
 
@@ -73,7 +72,7 @@ public class DepthRestrainedEngine extends BoardEngine implements Engine {
     }
 
 
-    public void expand(Node leaf) {
+    private void expand(Node leaf) {
         Map<Move, Board> next = generator.next(leaf.getBoard());
         for (Map.Entry<Move, Board> nextState : next.entrySet()) {
             Move move = nextState.getKey();
@@ -82,15 +81,12 @@ public class DepthRestrainedEngine extends BoardEngine implements Engine {
             Node newNode;
             if (nodes.containsKey(board)) {
                 newNode = nodes.get(board);
-                if(leaf.getChildren().containsValue(newNode)) {
-                    continue;
-                }
-                newNode.addParent(leaf);
             } else {
-                newNode = new Node(board, evaluate(board), leaf);
+                newNode = new Node(board, evaluate(board));
                 nodes.put(board, newNode);
             }
-            leaf.addChild(move, newNode);
+
+            leaf.embraceAsChild(move, newNode);
         }
         for (Node child : leaf.getChildren().values()) {
             if (!child.getNodeEvaluation().isDecisive() && !child.wasExpanded()) {
@@ -106,6 +102,9 @@ public class DepthRestrainedEngine extends BoardEngine implements Engine {
 
     @Override
     public Move getBestMove() {
+        if(!currentState.wasExpanded()){
+            expand(currentState);
+        }
         return currentState.getBestContinuation();
     }
 
@@ -119,7 +118,7 @@ public class DepthRestrainedEngine extends BoardEngine implements Engine {
             current = current.follow(continuation);
             if (current == null) break;
             moves.add(continuation);
-        } while (!current.getStateEvaluation().isDecisive());
+        } while (!current.getBoardEvaluation().isDecisive());
         return moves;
     }
 

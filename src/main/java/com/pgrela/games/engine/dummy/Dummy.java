@@ -8,17 +8,17 @@ import com.pgrela.games.engine.api.Rules;
 public class Dummy implements Rules {
     @Override
     public Evaluator getEvaluator() {
-        return new DummyGameStateEvaluator();
+        return new DummyGame();
     }
 
     @Override
     public Generator getGenerator() {
-        return new DummyGameStateGenerator();
+        return new DummyGame();
     }
 
     @Override
     public Board initialBoard() {
-        return new DummyGameStateFactory().initialState();
+        return new DummyGame().initialState();
     }
 
 }
