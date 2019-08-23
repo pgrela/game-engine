@@ -71,4 +71,13 @@ public class TwoPlayersEvaluation implements Evaluation {
         result = 31 * result + (decisive ? 1 : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "TwoPlayersEvaluation{" +
+                "player=" + player +
+                ", evaluation=" + evaluation +
+                ", decisive=" + decisive +
+                '}';
+    }
 }

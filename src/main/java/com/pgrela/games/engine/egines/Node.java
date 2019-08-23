@@ -7,12 +7,13 @@ import com.pgrela.games.engine.api.Move;
 import com.pgrela.games.engine.api.Player;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 class Node {
     private HashBiMap<Move, Node> children;
     private PriorityQueue<Node> bestMoves;
     private Collection<Node> parents;
-    private int depth;
+    private int depth = -1;
 
     private Board board;
     private final Player currentlyMoving;
@@ -24,13 +25,16 @@ class Node {
     private boolean expanded = false;
     private boolean removed = false;
 
+    Node(Board board, Evaluation boardEvaluation, int depth) {
+        this(board, boardEvaluation);
+        this.depth = depth;
+    }
     Node(Board board, Evaluation boardEvaluation) {
         this.board = board;
         this.boardEvaluation = boardEvaluation;
         nodeEvaluation = boardEvaluation;
         children = HashBiMap.create();
         currentlyMoving = board.getNextPlayer();
-        depth = 0;
         parents = new ArrayList<>();
         bestMoves = new PriorityQueue<>(Comparator.comparingDouble((Node node) -> node.nodeEvaluation.getForPlayer(currentlyMoving)).reversed());
     }
@@ -42,12 +46,13 @@ class Node {
     private void addParent(Node newParent) {
         removed = false;
         parents.add(newParent);
-        if (parents.size() == 1) {
+        if (depth == -1) {
             depth = newParent.getDepth() + 1;
         } else {
             if (depth > newParent.getDepth() + 1) {
                 depth = newParent.getDepth() + 1;
             }
+
         }
     }
 
@@ -140,33 +145,9 @@ class Node {
         return depth;
     }
 
-    private void disconnect() {
-        disconnectChildren();
-        disconnectParents();
-        removed = true;
-    }
-
-    private void disconnectParents() {
-        parents.forEach(this::removeChild);
-        parents.clear();
-    }
-
-    private void disconnectChildren() {
-        children.forEach((ignore, child) -> child.removeParent(this));
-        children.clear();
-        bestMoves.clear();
-        bestContinuation=null;
-    }
-
     private void removeParent(Node parent) {
         if (!parents.contains(parent)) {
             throw new IllegalStateException();
-        }
-        parents.remove(parent);
-        if (parents.isEmpty()) {
-            depth = 0;
-        } else {
-            depth = parents.stream().mapToInt(Node::getDepth).min().getAsInt() + 1;
         }
     }
 
@@ -174,33 +155,34 @@ class Node {
         return removed;
     }
 
-    private void removeChild(Node parent) {
-        parent.bestMoves.remove(this);
-        parent.children.inverse().remove(this);
-        parent.recalculateEvaluation();
-    }
-
-    void getLostUnless(Map<Node, Boolean> hasRootAsAncestorCache) {
-        if (removed) return;
+    void getLostUnless(Map<Node, Boolean> hasRootAsAncestorCache, Consumer<Node> onRemove) {
+        if (removed) {
+            return;
+        }
         if (!hasAncestor(hasRootAsAncestorCache)) {
             ArrayList<Node> cachedChildren = new ArrayList<>(getChildren().values());
-            disconnect();
-            cachedChildren.forEach(child -> child.getLostUnless(hasRootAsAncestorCache));
+            children.forEach((ignore, child1) -> child1.removeParent(this));
+            parents.clear();
+            bestMoves.clear();
+            bestContinuation=null;
+            removed = true;
+            onRemove.accept(this);
+            cachedChildren.forEach(child -> child.getLostUnless(hasRootAsAncestorCache, onRemove));
         }
     }
 
-    private boolean hasAncestor(Map<Node, Boolean> visited) {
-        Boolean cachedResult = visited.get(this);
+    private boolean hasAncestor(Map<Node, Boolean> visiting) {
+        Boolean cachedResult = visiting.get(this);
         if (cachedResult != null) {
             return cachedResult;
         }
         for (Node parent : getParents()) {
-            if (parent.hasAncestor(visited)) {
-                visited.put(this, true);
+            if (parent.hasAncestor(visiting)) {
+                visiting.put(this, true);
                 return true;
             }
         }
-        visited.put(this, false);
+        visiting.put(this, false);
         return false;
     }
 

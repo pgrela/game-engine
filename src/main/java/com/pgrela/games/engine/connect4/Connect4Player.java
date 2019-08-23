@@ -8,7 +8,6 @@ import java.util.Map;
 public enum Connect4Player implements Player {
     RED, BLUE;
 
-
     private static Map<Connect4Player, Tile> TO_TILE = new HashMap<>();
     private static Map<Tile, Connect4Player> TO_PLAYER = new HashMap<>();
     static {

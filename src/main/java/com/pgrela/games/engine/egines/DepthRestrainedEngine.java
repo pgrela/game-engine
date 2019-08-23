@@ -35,6 +35,10 @@ public class DepthRestrainedEngine extends BoardEngine implements Engine {
     @Override
     public void start() {
         while (!leafs.isEmpty()) {
+            if(leafs.peek().isRemoved()){
+                leafs.poll();
+                continue;
+            }
             if (shouldNotContinue(leafs.peek())) {
                 return;
             }
@@ -51,7 +55,7 @@ public class DepthRestrainedEngine extends BoardEngine implements Engine {
     }
 
     private Node createRootNode(Board board) {
-        Node newNode = new Node(board, evaluate(board));
+        Node newNode = new Node(board, evaluate(board), 0);
         nodes.put(board, newNode);
 
         return newNode;
@@ -146,7 +150,7 @@ public class DepthRestrainedEngine extends BoardEngine implements Engine {
         Map<Node,Boolean> hasCurrentAsAncestor = new HashMap<>();
         hasCurrentAsAncestor.put(currentState, true);
         System.out.println(nodes.size());
-        passedState.getLostUnless(hasCurrentAsAncestor);
+        passedState.getLostUnless(hasCurrentAsAncestor, nodes::remove);
         System.out.println(nodes.size());
         nodes.entrySet().removeIf(e->e.getValue().isRemoved());
         System.out.println(nodes.size());

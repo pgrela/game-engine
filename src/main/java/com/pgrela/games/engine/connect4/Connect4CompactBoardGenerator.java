@@ -4,12 +4,10 @@ import com.pgrela.games.engine.api.Board;
 import com.pgrela.games.engine.api.GeneratorImpl;
 import com.pgrela.games.engine.api.Move;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import static com.pgrela.games.engine.connect4.Connect4CompactBoard.*;
-import static com.pgrela.games.engine.connect4.Connect4CompactBoardEvaluator.BITS;
 
 public class Connect4CompactBoardGenerator implements GeneratorImpl<Connect4CompactBoard> {
 
@@ -30,7 +28,8 @@ public class Connect4CompactBoardGenerator implements GeneratorImpl<Connect4Comp
         int alteredColumn = move.getColumn();
         for (int row = ROWS - 1; row >= 0; row--) {
             if (board.isBlank(row, alteredColumn)) {
-                magicBoard.setCode(row, alteredColumn, board.getNextPlayer().getSymbol().getCode());
+                magicBoard.setCode(row, alteredColumn,
+                        Connect4CompactBoard.PLAYER_SYMBOLS.get(board.getNextPlayer().getSymbol()));
                 return new Connect4CompactBoard(magicBoard, board.getNextPlayer().next(),
                         board.getBlanks() - 1);
             }

@@ -9,16 +9,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.pgrela.games.engine.connect4.Connect4CompactBoard.COLUMNS;
 import static com.pgrela.games.engine.connect4.Connect4CompactBoard.*;
+import static com.pgrela.games.engine.connect4.Connect4CompactBoard.MagicBoard;
+import static com.pgrela.games.engine.connect4.Connect4CompactBoard.MagicBoard.*;
+import static com.pgrela.games.engine.connect4.Connect4CompactBoard.ROWS;
 
 public class Connect4CompactBoardEvaluator implements EvaluatorImpl<Connect4CompactBoard> {
+    public static final TwoPlayersEvaluation EVALUATION_RED = new TwoPlayersEvaluation(Connect4Player.RED);
+    public static final TwoPlayersEvaluation EVALUATION_BLUE = new TwoPlayersEvaluation(Connect4Player.BLUE);
     static private List<Long> LEFT_LINES = new ArrayList<>();
     static private List<Long> RIGHT_LINES = new ArrayList<>();
-    static long CROSS = 1;
-    static long CIRCLE = 2;
-    static long BLANK = 0;
-    static long MASK = 3;
-    static long BITS = 2;
+    static private List<Long> LINES_OF_THREE = new ArrayList<>();
     private static long CROSSES = 0;
     private static long CIRCLES = 0;
 
@@ -61,10 +63,15 @@ public class Connect4CompactBoardEvaluator implements EvaluatorImpl<Connect4Comp
         for (int i = 0; i < 4; i++) {
             magicBoard.setCode(cords[i].getRow(), cords[i].getColumn(), MASK);
         }
-        if (Arrays.stream(cords).mapToInt(Coords::getColumn).max().getAsInt()<5) {
+        if (Arrays.stream(cords).mapToInt(Coords::getColumn).max().getAsInt() < 5) {
             LEFT_LINES.add(magicBoard.left);
         } else {
             RIGHT_LINES.add(magicBoard.right);
+            for (int i = 0; i < 4; i++) {
+                magicBoard.resetCode(cords[i].getRow(), cords[i].getColumn(), BLANK);
+                LINES_OF_THREE.add(magicBoard.right);
+                magicBoard.setCode(cords[i].getRow(), cords[i].getColumn(), MASK);
+            }
         }
     }
 
@@ -107,24 +114,34 @@ public class Connect4CompactBoardEvaluator implements EvaluatorImpl<Connect4Comp
     @Override
     public Evaluation evaluateBoard(Connect4CompactBoard board) {
         for (long line : LEFT_LINES) {
-            if((board.board.left & line) == (line&CROSSES)){
-                return new TwoPlayersEvaluation(Connect4Player.RED);
+            if ((board.board.left & line) == (line & CROSSES)) {
+                return EVALUATION_RED;
             }
-            if((board.board.left & line) == (line&CIRCLES)){
-                return new TwoPlayersEvaluation(Connect4Player.BLUE);
+            if ((board.board.left & line) == (line & CIRCLES)) {
+                return EVALUATION_BLUE;
             }
         }
-        for (long line : RIGHT_LINES) {
-            if((board.board.right & line) == (line&CROSSES)){
-                return new TwoPlayersEvaluation(Connect4Player.RED);
+        for (long line : LEFT_LINES) {
+            if ((board.board.right & line) == (line & CROSSES)) {
+                return EVALUATION_RED;
             }
-            if((board.board.right & line) == (line&CIRCLES)){
-                return new TwoPlayersEvaluation(Connect4Player.BLUE);
+            if ((board.board.right & line) == (line & CIRCLES)) {
+                return EVALUATION_BLUE;
             }
         }
         if (board.getBlanks() == 0) {
             return TwoPlayersBinaryEvaluation.DRAWN;
         }
-        return TwoPlayersBinaryEvaluation.DRAWING;
+        double redCross=0;
+        double blueCircle=0;
+        for (long lineOfThree : LINES_OF_THREE) {
+            if ((board.board.right & lineOfThree) == (lineOfThree & CROSSES)) {
+                redCross+=1;
+            }
+            if ((board.board.right & lineOfThree) == (lineOfThree & CIRCLES)) {
+                blueCircle+=1;
+            }
+        }
+        return new TwoPlayersEvaluation(Connect4Player.BLUE, blueCircle - redCross);
     }
 }
