@@ -1,13 +1,13 @@
 package com.pgrela.games.engine.connect4;
 
 import com.pgrela.games.engine.api.Board;
+import com.pgrela.games.engine.connect4.game.MagicBoard;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
-import static com.pgrela.games.engine.connect4.Connect4CompactBoard.MagicBoard.BLANK;
+import static com.pgrela.games.engine.connect4.game.MagicBoard.BLANK;
 
 public class Connect4CompactBoard implements Board {
 
@@ -25,87 +25,6 @@ public class Connect4CompactBoard implements Board {
         PLAYER_SYMBOLS.put(Tile.BLUE, MagicBoard.CIRCLE);
         PLAYER_SYMBOLS.put(Tile.RED, MagicBoard.CROSS);
         PLAYER_SYMBOLS.put(Tile.BLANK, BLANK);
-    }
-
-    static class MagicBoard {
-        static long CROSS = 1;
-        static long CIRCLE = 2;
-        static long BLANK = 0;
-        static long MASK = 3;
-        static long BITS = 2;
-        public static final int COLUMNS = 5;
-        public static final int ROWS = 6;
-        /**
-         * 0,6,12,18,24
-         * 1
-         * 2
-         * 3
-         * 4
-         * 5         29
-         */
-        long left;
-        long right;
-
-        public MagicBoard(MagicBoard board) {
-            left = board.left;
-            right = board.right;
-        }
-
-        public MagicBoard() {
-
-        }
-
-        long getCode(int row, int column) {
-            if (column < COLUMNS) {
-                return getCodeFromLong(left, row, column);
-            }
-            return getCodeFromLong(right, row, COLUMNS - 1 - (column - 2));
-        }
-
-        void setCode(int row, int column, long symbol) {
-            if (column < COLUMNS) {
-                left = setCodeForLong(left, row, column, symbol);
-            }
-            if (column > 1) {
-                right = setCodeForLong(right, row, COLUMNS - 1 - (column - 2), symbol);
-            }
-        }
-
-        void resetCode(int row, int column, long symbol) {
-            if (column < COLUMNS) {
-                left = resetCodeForLong(left, row, column, symbol);
-            }
-            if (column > 1) {
-                right = resetCodeForLong(right, row, COLUMNS - 1 - (column - 2), symbol);
-            }
-        }
-
-        private long resetCodeForLong(long aLong, int row, int column, long symbol) {
-            long offset = ((column * ROWS + row)) * BITS;
-            return (aLong ^ (~(MASK << offset))) | (symbol << offset);
-        }
-
-        private long getCodeFromLong(long aLong, int row, int column) {
-            return (aLong >> ((column * ROWS + row)) * BITS) & MASK;
-        }
-
-        private long setCodeForLong(long aLong, int row, int column, long symbol) {
-            return aLong | (symbol << (((column * ROWS + row)) * BITS));
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            MagicBoard that = (MagicBoard) o;
-            return left == that.left &&
-                    right == that.right;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(left | right);
-        }
     }
 
     public Connect4CompactBoard(MagicBoard board, Connect4Player nextPlayer, int blanks) {

@@ -3,6 +3,7 @@ package com.pgrela.games.engine.connect4;
 import com.pgrela.games.engine.api.Board;
 import com.pgrela.games.engine.api.GeneratorImpl;
 import com.pgrela.games.engine.api.Move;
+import com.pgrela.games.engine.connect4.game.MagicBoard;
 
 import java.util.HashMap;
 import java.util.Map;

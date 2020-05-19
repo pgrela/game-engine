@@ -1,10 +1,4 @@
-package com.pgrela.games.engine.connect4;
-
-import com.pgrela.games.engine.api.Evaluation;
-import com.pgrela.games.engine.api.EvaluatorImpl;
-import com.pgrela.games.engine.connect4.game.MagicBoard;
-import com.pgrela.games.engine.dummy.TwoPlayersBinaryEvaluation;
-import com.pgrela.games.engine.dummy.TwoPlayersEvaluation;
+package com.pgrela.games.engine.connect4.game;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,12 +13,9 @@ import static com.pgrela.games.engine.connect4.game.MagicBoard.CIRCLE;
 import static com.pgrela.games.engine.connect4.game.MagicBoard.CROSS;
 import static com.pgrela.games.engine.connect4.game.MagicBoard.MASK;
 
-public class Connect4CompactBoardEvaluator implements EvaluatorImpl<Connect4CompactBoard> {
-    public static final TwoPlayersEvaluation EVALUATION_RED = new TwoPlayersEvaluation(Connect4Player.RED);
-    public static final TwoPlayersEvaluation EVALUATION_BLUE = new TwoPlayersEvaluation(Connect4Player.BLUE);
+public class MagicBoardEvaluator {
     static private List<Long> LEFT_LINES = new ArrayList<>();
     static private List<Long> RIGHT_LINES = new ArrayList<>();
-    static private List<Long> LINES_OF_THREE = new ArrayList<>();
     private static long CROSSES = 0;
     private static long CIRCLES = 0;
 
@@ -71,11 +62,6 @@ public class Connect4CompactBoardEvaluator implements EvaluatorImpl<Connect4Comp
             LEFT_LINES.add(magicBoard.left);
         } else {
             RIGHT_LINES.add(magicBoard.right);
-            for (int i = 0; i < 4; i++) {
-                magicBoard.resetCode(cords[i].getRow(), cords[i].getColumn(), BLANK);
-                LINES_OF_THREE.add(magicBoard.right);
-                magicBoard.setCode(cords[i].getRow(), cords[i].getColumn(), MASK);
-            }
         }
     }
 
@@ -115,37 +101,23 @@ public class Connect4CompactBoardEvaluator implements EvaluatorImpl<Connect4Comp
         }
     }
 
-    @Override
-    public Evaluation evaluateBoard(Connect4CompactBoard board) {
+    public static long evaluateBoard(MagicBoard board) {
         for (long line : LEFT_LINES) {
-            if ((board.board.left & line) == (line & CROSSES)) {
-                return EVALUATION_RED;
+            if ((board.left & line) == (line & CROSSES)) {
+                return CROSS;
             }
-            if ((board.board.left & line) == (line & CIRCLES)) {
-                return EVALUATION_BLUE;
-            }
-        }
-        for (long line : LEFT_LINES) {
-            if ((board.board.right & line) == (line & CROSSES)) {
-                return EVALUATION_RED;
-            }
-            if ((board.board.right & line) == (line & CIRCLES)) {
-                return EVALUATION_BLUE;
+            if ((board.left & line) == (line & CIRCLES)) {
+                return CIRCLE;
             }
         }
-        if (board.getBlanks() == 0) {
-            return TwoPlayersBinaryEvaluation.DRAWN;
-        }
-        double redCross=0;
-        double blueCircle=0;
-        for (long lineOfThree : LINES_OF_THREE) {
-            if ((board.board.right & lineOfThree) == (lineOfThree & CROSSES)) {
-                redCross+=1;
+        for (long line : RIGHT_LINES) {
+            if ((board.right & line) == (line & CROSSES)) {
+                return CROSS;
             }
-            if ((board.board.right & lineOfThree) == (lineOfThree & CIRCLES)) {
-                blueCircle+=1;
+            if ((board.right & line) == (line & CIRCLES)) {
+                return CIRCLE;
             }
         }
-        return new TwoPlayersEvaluation(Connect4Player.BLUE, blueCircle - redCross);
+        return BLANK;
     }
 }
